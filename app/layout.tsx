@@ -1,6 +1,21 @@
 import type { Metadata } from 'next'
+import { Cormorant_Garamond, Jost } from 'next/font/google'
 import './globals.css'
 import { SITE_CONFIG } from '@/lib/config'
+
+const cormorant = Cormorant_Garamond({
+    subsets: ['cyrillic', 'latin'],
+    weight: ['300', '400', '500', '600'],
+    variable: '--font-cormorant',
+    display: 'swap',
+})
+
+const jost = Jost({
+    subsets: ['cyrillic', 'latin'],
+    weight: ['300', '400', '500', '600'],
+    variable: '--font-jost',
+    display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Калькулятор ипотеки на дом — Good House',
@@ -44,7 +59,7 @@ export default function RootLayout({
           </>
         )}
       </head>
-      <body>{children}</body>
+            <body className={`${cormorant.variable} ${jost.variable} font-body bg-stone-50 text-stone-900 antialiased`}>{children}</body
     </html>
   )
 }
