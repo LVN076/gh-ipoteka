@@ -11,28 +11,24 @@ interface VKScreenProps {
 }
 
 export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
-  const [status, setStatus] = useState<'idle' | 'checking' | 'not_member' | 'error'>('idle')
+  const [status, setStatus] = useState<'idle' | 'not_member' | 'error'>('idle')
 
   useEffect(() => {
-    // Проверяем параметры URL после возврата из VK OAuth
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
     const vkOk = params.get('vk_ok')
     const vkErr = params.get('vk_err')
 
     if (vkOk === '1') {
-      // Успешно подписан — убираем параметры из URL и открываем калькулятор
       window.history.replaceState({}, '', '/')
       onConfirm()
       return
     }
-
     if (vkErr === 'not_member') {
       window.history.replaceState({}, '', '/')
       setStatus('not_member')
       return
     }
-
     if (vkErr) {
       window.history.replaceState({}, '', '/')
       setStatus('error')
@@ -41,18 +37,19 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
   }, [onConfirm])
 
   const handleVKAuth = () => {
-    // Запускаем VK OAuth
-    const scope = 'groups'
-    const authUrl =
-      `https://oauth.vk.com/authorize?client_id=${VK_CLIENT_ID}` +
-      `&display=page&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
-      `&scope=${scope}&response_type=code&v=5.199`
-    window.location.href = authUrl
+    // VK ID OAuth 2.1 endpoint (для приложений созданных через id.vk.com)
+    const params = new URLSearchParams({
+      client_id: VK_CLIENT_ID,
+      redirect_uri: REDIRECT_URI,
+      response_type: 'code',
+      scope: 'groups',
+      state: Math.random().toString(36).substring(2),
+    })
+    window.location.href = `https://id.vk.com/oauth2/auth?${params.toString()}`
   }
 
   return (
     <div className="screen-enter" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', padding: '20px 24px 32px' }}>
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
         <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-body)' }}>
           ← Назад
@@ -60,13 +57,11 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
         <span style={{ fontFamily: 'var(--font-display)', fontSize: '13px', letterSpacing: '0.12em', color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>GOOD HOUSE</span>
       </div>
 
-      {/* Progress */}
       <div style={{ display: 'flex', gap: '4px', marginBottom: '40px' }}>
         <div style={{ height: '2px', flex: 1, background: 'var(--color-text)' }}></div>
         <div style={{ height: '2px', flex: 1, background: 'var(--color-border)' }}></div>
       </div>
 
-      {/* Content */}
       <div style={{ flex: 1 }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '32px', fontWeight: 400, lineHeight: 1.2, marginBottom: '16px', color: 'var(--color-text)' }}>
           Подпишитесь на нашу группу
@@ -75,7 +70,6 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
           После подписки вы получите доступ к калькулятору и будете первыми узнавать о новых проектах и акциях
         </p>
 
-        {/* Кнопка авторизации через VK */}
         <button
           onClick={handleVKAuth}
           style={{
@@ -103,11 +97,10 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
           Войти через VK и подписаться
         </button>
 
-        {/* Ошибка: не подписан */}
         {status === 'not_member' && (
           <div style={{ background: '#fff3cd', border: '1px solid #ffc107', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: '16px' }}>
             <p style={{ fontSize: '14px', color: '#856404', fontFamily: 'var(--font-body)', margin: 0, lineHeight: 1.5 }}>
-              Вы авторизованы через VK, но ещё не подписаны на группу.{' '}
+              Вы авторизованы, но ещё не подписаны на группу.{' '}
               <a href={VK_GROUP_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#4a76a8', fontWeight: 600 }}>
                 Подпишитесь на группу
               </a>{' '}
@@ -116,7 +109,6 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
           </div>
         )}
 
-        {/* Ошибка: другая */}
         {status === 'error' && (
           <div style={{ background: '#f8d7da', border: '1px solid #f5c2c7', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: '16px' }}>
             <p style={{ fontSize: '14px', color: '#842029', fontFamily: 'var(--font-body)', margin: 0 }}>
