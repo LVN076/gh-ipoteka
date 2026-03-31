@@ -20,8 +20,17 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const tokenUrl = `https://oauth.vk.com/access_token?client_id=${VK_CLIENT_ID}&client_secret=${VK_CLIENT_SECRET}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&code=${code}`
-    const tokenRes = await fetch(tokenUrl)
+    const tokenRes = await fetch('https://id.vk.com/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: REDIRECT_URI,
+        client_id: VK_CLIENT_ID,
+        client_secret: VK_CLIENT_SECRET,
+      }).toString(),
+    })
 
     const tokenData = await tokenRes.json()
     console.log('VK token response:', JSON.stringify(tokenData))
