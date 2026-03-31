@@ -28,12 +28,14 @@ interface CalcInput {
 
 export default function Home() {
   const [screen, setScreen] = useState<Screen>('hero')
+  const [mounted, setMounted] = useState(false)
   const [userName, setUserName] = useState<string | undefined>()
   const [calcResult, setCalcResult] = useState<CalculatorResult | null>(null)
   const [calcInput, setCalcInput] = useState<CalcInput | null>(null)
 
   // Track UTMs on load, send page_view event
   useEffect(() => {
+    setMounted(true)
     ymEvent(SITE_CONFIG.yandexMetrikaId, 'page_view', getUtmParams())
   }, [])
 
@@ -79,6 +81,9 @@ export default function Home() {
   const handleRecalculate = () => {
     go('calculator')
   }
+
+
+  if (!mounted) return null
 
   return (
     <main
