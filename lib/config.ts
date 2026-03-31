@@ -11,7 +11,7 @@ export const SITE_CONFIG = {
   sourceTag: 'mortgage_calculator_vk',
 }
 
-export interface MortgageProgram {h
+export interface MortgageProgram {
   id: string
   name: string
   rate: number
