@@ -7,29 +7,25 @@ import VKScreen from '../components/VKScreen'
 import LeadFormScreen from '../components/LeadFormScreen'
 import CalculatorScreen from '../components/CalculatorScreen'
 import ResultScreen from '../components/ResultScreen'
-import { calculateMortgage } from '../lib/mortgage'
-import { SITE_CONFIG, MORTGAGE_PROGRAMS } from '../lib/config'
+import { CalculatorResult } from '../lib/mortgage'
+import { SITE_CONFIG } from '../lib/config'
 
 type Screen = 'hero' | 'access' | 'vk' | 'lead' | 'calculator' | 'result'
 
 interface CalcInput {
-  programId: string
+  programName: string
   propertyPrice: number
   downPayment: number
   termYears: number
+  rate: number
 }
 
 export default function HomeApp() {
   const [screen, setScreen] = useState<Screen>('hero')
   const [mounted, setMounted] = useState(false)
   const [userName, setUserName] = useState('')
-  const [calcResult, setCalcResult] = useState<ReturnType<typeof calculateMortgage> | null>(null)
-  const [calcInput, setCalcInput] = useState<CalcInput>({
-    programId: 'family',
-    propertyPrice: 5000000,
-    downPayment: 1500000,
-    termYears: 20,
-  })
+  const [calcResult, setCalcResult] = useState<CalculatorResult | null>(null)
+  const [calcInput, setCalcInput] = useState<CalcInput | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -50,17 +46,9 @@ export default function HomeApp() {
     setScreen('calculator')
   }
 
-  const handleResult = (input: CalcInput) => {
-    setCalcInput(input)
-    const program = MORTGAGE_PROGRAMS.find((p) => p.id === input.programId)
-    if (!program) return
-    const result = calculateMortgage({
-      propertyPrice: input.propertyPrice,
-      downPayment: input.downPayment,
-      termYears: input.termYears,
-      annualRate: program.rate,
-    })
+  const handleResult = (result: CalculatorResult, input: CalcInput) => {
     setCalcResult(result)
+    setCalcInput(input)
     setScreen('result')
   }
 
@@ -75,15 +63,15 @@ export default function HomeApp() {
       {screen === 'calculator' && (
         <CalculatorScreen
           userName={userName}
-          initialInput={calcInput}
           onResult={handleResult}
         />
       )}
-      {screen === 'result' && calcResult && (
+      {screen === 'result' && calcResult && calcInput && (
         <ResultScreen
           result={calcResult}
           input={calcInput}
           onRecalculate={handleRecalculate}
+          userName={userName}
         />
       )}
     </main>
