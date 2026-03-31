@@ -100,12 +100,23 @@ export default function CalculatorScreen({ onResult, userName }: CalculatorScree
       {/* Header */}
       <header className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 flex items-center justify-center" style={{ border: '1px solid #c4a44a' }}>
-            <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1L11 5V11H7V8H5V11H1V5L6 1Z" fill="#c4a44a"/></svg>
-          </div>
-          <span style={{ fontFamily: 'var(--font-body)', fontSize: '12px', fontWeight: 500, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>
-            Good House
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 3L29 13V29H20V21H12V29H3V13L16 3Z" fill="none" stroke="#c4a44a" strokeWidth="2" strokeLinejoin="round"/>
+            <path d="M16 3L29 13V29H20V21H12V29H3V13L16 3Z" fill="rgba(196,164,74,0.12)"/>
+            <path d="M10 13L16 8L22 13" stroke="#c4a44a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '15px',
+            fontWeight: 700,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: 'var(--color-text)',
+          }}>
+            ГУД ХАУС
           </span>
+        </div>
         </div>
         {userName && (
           <span style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--color-text-muted)' }}>
