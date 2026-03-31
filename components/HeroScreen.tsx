@@ -28,27 +28,16 @@ export default function HeroScreen({ onStart }: HeroScreenProps) {
 
       {/* Header — логотип ГУД ХАУС */}
       <header className="relative z-10 px-6 pt-8 pb-4">
-        <div className="flex items-center gap-3">
-          {/* Иконка дома — увеличенная */}
-          <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid #c4a44a', borderRadius: 6 }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M3 9.5L12 3L21 9.5V21H15V15H9V21H3V9.5Z" stroke="#c4a44a" strokeWidth="1.5" strokeLinejoin="round" fill="none"/>
-              <path d="M9 21V15H15V21" stroke="#c4a44a" strokeWidth="1.5" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          {/* Надпись ГУД ХАУС */}
-          <span style={{
+        <span style={{
             fontFamily: 'var(--font-display)',
             fontSize: '20px',
             fontWeight: 700,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
             color: 'var(--color-text)',
-            lineHeight: 1,
           }}>
             ГУД ХАУС
           </span>
-        </div>
       </header>
 
       {/* Main content */}
