@@ -30,7 +30,7 @@ export default function RootLayout({
   const ymId = SITE_CONFIG.yandexMetrikaId
 
   return (
-    <html lang="ru">
+    <html lang="ru" suppressHydrationWarning>
       <head>
         {ymId && (
           <>
@@ -58,7 +58,7 @@ export default function RootLayout({
           </>
         )}
       </head>
-      <body className={`${cormorant.variable} ${jost.variable} font-body bg-stone-50 text-stone-900 antialiased`}>
+      <body className={`${cormorant.variable} ${jost.variable} font-body bg-stone-50 text-stone-900 antialiased`} suppressHydrationWarning>
         {children}
       </body>
     </html>
