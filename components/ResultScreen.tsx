@@ -144,7 +144,7 @@ export default function ResultScreen({ result, input, onRecalculate, userName }:
       {/* CTA buttons */}
       <div className="flex flex-col gap-3 mb-6">
         <a
-          href={`tel:${SITE_CONFIG.vkGroupUrl}`}
+          href="tel:+79959129545"
           className="btn-gold"
           style={{ textDecoration: 'none' }}
         >
