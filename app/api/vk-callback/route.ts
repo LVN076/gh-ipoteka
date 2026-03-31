@@ -20,21 +20,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // VK ID OAuth 2.1: обменять code на access_token
-    // Используем id.vk.com/oauth2/auth endpoint
-    const tokenBody = new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: REDIRECT_URI,
-      client_id: VK_CLIENT_ID,
-      client_secret: VK_CLIENT_SECRET,
-    })
-
-    const tokenRes = await fetch('https://id.vk.com/oauth2/auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: tokenBody.toString(),
-    })
+    const tokenUrl = `https://oauth.vk.com/access_token?client_id=${VK_CLIENT_ID}&client_secret=${VK_CLIENT_SECRET}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&code=${code}`
+    const tokenRes = await fetch(tokenUrl)
 
     const tokenData = await tokenRes.json()
     console.log('VK token response:', JSON.stringify(tokenData))
