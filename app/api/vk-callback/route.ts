@@ -11,7 +11,6 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get('code')
   const error = searchParams.get('error')
 
-  // VK вернул ошибку (пользователь отказал)
   if (error) {
     return NextResponse.redirect(new URL('/?vk_err=denied', request.url))
   }
@@ -21,32 +20,60 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Шаг 1: обменять code на access_token
-    const tokenRes = await fetch(
-      `https://oauth.vk.com/access_token?client_id=${VK_CLIENT_ID}&client_secret=${VK_CLIENT_SECRET}&redirect_uri=${REDIRECT_URI}&code=${code}`
-    )
-    const tokenData = await tokenRes.json()
+    // VK ID OAuth 2.1: обменять code на access_token
+    // Используем id.vk.com/oauth2/auth endpoint
+    const tokenBody = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: REDIRECT_URI,
+      client_id: VK_CLIENT_ID,
+      client_secret: VK_CLIENT_SECRET,
+    })
 
-    if (tokenData.error || !tokenData.user_id) {
+    const tokenRes = await fetch('https://id.vk.com/oauth2/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: tokenBody.toString(),
+    })
+
+    const tokenData = await tokenRes.json()
+    console.log('VK token response:', JSON.stringify(tokenData))
+
+    if (tokenData.error || !tokenData.access_token) {
       console.error('VK token error:', tokenData)
       return NextResponse.redirect(new URL('/?vk_err=token_failed', request.url))
     }
 
-    const userId = tokenData.user_id
+    // Получить user_id из токена или через VK API
+    // VK ID возвращает id_token (JWT) или user_id в ответе
+    let userId = tokenData.user_id
 
-    // Шаг 2: проверить членство в группе через service token
+    if (!userId && tokenData.access_token) {
+      // Получить user_id через users.get
+      const userRes = await fetch(
+        `https://api.vk.com/method/users.get?access_token=${tokenData.access_token}&v=5.199`
+      )
+      const userData = await userRes.json()
+      userId = userData.response?.[0]?.id
+    }
+
+    if (!userId) {
+      console.error('Could not get user_id')
+      return NextResponse.redirect(new URL('/?vk_err=no_user_id', request.url))
+    }
+
+    // Проверить членство в группе через service token
     const memberRes = await fetch(
       `https://api.vk.com/method/groups.isMember?group_id=${VK_GROUP_ID}&user_id=${userId}&access_token=${VK_SERVICE_TOKEN}&v=5.199`
     )
     const memberData = await memberRes.json()
+    console.log('isMember response:', JSON.stringify(memberData))
 
     const isMember = memberData.response === 1
 
     if (isMember) {
-      // Подписан — открываем калькулятор
       return NextResponse.redirect(new URL('/?vk_ok=1', request.url))
     } else {
-      // Не подписан — возвращаем с ошибкой
       return NextResponse.redirect(new URL('/?vk_err=not_member', request.url))
     }
   } catch (err) {
