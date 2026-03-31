@@ -224,3 +224,4 @@ export default function AccessScreen({ onVK, onPhone, onBack }: AccessScreenProp
     </div>
   )
 }
+
