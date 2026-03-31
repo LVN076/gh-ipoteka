@@ -107,15 +107,9 @@ export default function LeadFormScreen({ onSuccess, onBack }: LeadFormScreenProp
           </svg>
           Назад
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M16 3L29 13V29H20V21H12V29H3V13L16 3Z" fill="none" stroke="#c4a44a" strokeWidth="2" strokeLinejoin="round"/>
-            <path d="M16 3L29 13V29H20V21H12V29H3V13L16 3Z" fill="rgba(196,164,74,0.12)"/>
-            <path d="M10 13L16 8L22 13" stroke="#c4a44a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span style={{
+        <span style={{
             fontFamily: 'var(--font-display)',
-            fontSize: '15px',
+            fontSize: '17px',
             fontWeight: 700,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
@@ -123,7 +117,6 @@ export default function LeadFormScreen({ onSuccess, onBack }: LeadFormScreenProp
           }}>
             ГУД ХАУС
           </span>
-        </div>
       </header>
 
       {/* Step */}
