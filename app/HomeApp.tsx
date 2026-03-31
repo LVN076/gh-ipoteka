@@ -37,9 +37,10 @@ export default function HomeApp() {
   if (!mounted) return null
 
   const handleStart = () => setScreen('access')
-  const handleChooseVK = () => setScreen('vk')
-  const handleChoosePhone = () => setScreen('lead')
   const handleVKConfirm = () => setScreen('calculator')
+
+  const handleVK = () => setScreen('vk')
+  const handlePhone = () => setScreen('lead')
 
   const handleLeadSuccess = (name: string) => {
     setUserName(name)
@@ -57,9 +58,25 @@ export default function HomeApp() {
   return (
     <main className="min-h-screen bg-background">
       {screen === 'hero' && <HeroScreen onStart={handleStart} />}
-      {screen === 'access' && <AccessScreen onChooseVK={handleChooseVK} onChoosePhone={handleChoosePhone} />}
-      {screen === 'vk' && <VKScreen onConfirm={handleVKConfirm} />}
-      {screen === 'lead' && <LeadFormScreen onSuccess={handleLeadSuccess} />}
+      {screen === 'access' && (
+        <AccessScreen
+          onVK={handleVK}
+          onPhone={handlePhone}
+          onBack={() => setScreen('hero')}
+        />
+      )}
+      {screen === 'vk' && (
+        <VKScreen
+          onConfirm={handleVKConfirm}
+          onBack={() => setScreen('access')}
+        />
+      )}
+      {screen === 'lead' && (
+        <LeadFormScreen
+          onSuccess={handleLeadSuccess}
+          onBack={() => setScreen('access')}
+        />
+      )}
       {screen === 'calculator' && (
         <CalculatorScreen
           userName={userName}
