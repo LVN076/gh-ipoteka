@@ -38,7 +38,6 @@ export default function HomeApp() {
 
   const handleStart = () => setScreen('access')
   const handleVKConfirm = () => setScreen('calculator')
-
   const handleVK = () => setScreen('vk')
   const handlePhone = () => setScreen('lead')
 
@@ -56,41 +55,43 @@ export default function HomeApp() {
   const handleRecalculate = () => setScreen('calculator')
 
   return (
-    <main className="min-h-screen bg-background">
-      {screen === 'hero' && <HeroScreen onStart={handleStart} />}
-      {screen === 'access' && (
-        <AccessScreen
-          onVK={handleVK}
-          onPhone={handlePhone}
-          onBack={() => setScreen('hero')}
-        />
-      )}
-      {screen === 'vk' && (
-        <VKScreen
-          onConfirm={handleVKConfirm}
-          onBack={() => setScreen('access')}
-        />
-      )}
-      {screen === 'lead' && (
-        <LeadFormScreen
-          onSuccess={handleLeadSuccess}
-          onBack={() => setScreen('access')}
-        />
-      )}
-      {screen === 'calculator' && (
-        <CalculatorScreen
-          userName={userName}
-          onResult={handleResult}
-        />
-      )}
-      {screen === 'result' && calcResult && calcInput && (
-        <ResultScreen
-          result={calcResult}
-          input={calcInput}
-          onRecalculate={handleRecalculate}
-          userName={userName}
-        />
-      )}
-    </main>
+    <div className="app-wrapper">
+      <div className="app-card">
+        {screen === 'hero' && <HeroScreen onStart={handleStart} />}
+        {screen === 'access' && (
+          <AccessScreen
+            onVK={handleVK}
+            onPhone={handlePhone}
+            onBack={() => setScreen('hero')}
+          />
+        )}
+        {screen === 'vk' && (
+          <VKScreen
+            onConfirm={handleVKConfirm}
+            onBack={() => setScreen('access')}
+          />
+        )}
+        {screen === 'lead' && (
+          <LeadFormScreen
+            onSuccess={handleLeadSuccess}
+            onBack={() => setScreen('access')}
+          />
+        )}
+        {screen === 'calculator' && (
+          <CalculatorScreen
+            userName={userName}
+            onResult={handleResult}
+          />
+        )}
+        {screen === 'result' && calcResult && calcInput && (
+          <ResultScreen
+            result={calcResult}
+            input={calcInput}
+            onRecalculate={handleRecalculate}
+            userName={userName}
+          />
+        )}
+      </div>
+    </div>
   )
 }
