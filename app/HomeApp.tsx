@@ -8,7 +8,7 @@ import LeadFormScreen from '../components/LeadFormScreen'
 import CalculatorScreen from '../components/CalculatorScreen'
 import ResultScreen from '../components/ResultScreen'
 import { calculateMortgage } from '../lib/mortgage'
-import { SITE_CONFIG } from '../lib/config'
+import { SITE_CONFIG, MORTGAGE_PROGRAMS } from '../lib/config'
 
 type Screen = 'hero' | 'access' | 'vk' | 'lead' | 'calculator' | 'result'
 
@@ -52,7 +52,7 @@ export default function HomeApp() {
 
   const handleResult = (input: CalcInput) => {
     setCalcInput(input)
-    const program = SITE_CONFIG.programs.find((p) => p.id === input.programId)
+    const program = MORTGAGE_PROGRAMS.find((p) => p.id === input.programId)
     if (!program) return
     const result = calculateMortgage({
       propertyPrice: input.propertyPrice,
