@@ -45,7 +45,7 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
       scope: 'groups',
       state: Math.random().toString(36).substring(2),
     })
-    window.location.href = `https://oauth.vk.com/authorize?${params.toString()}`
+    window.location.href = `https://id.vk.com/authorize?${params.toString()}`
   }
 
   return (
