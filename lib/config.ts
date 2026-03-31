@@ -4,14 +4,14 @@
 
 export const SITE_CONFIG = {
   projectName: 'Good House',
-  vkGroupUrl: process.env.NEXT_PUBLIC_VK_GROUP_URL || 'https://vk.com/goodhouse',
+  vkGroupUrl: process.env.NEXT_PUBLIC_VK_GROUP_URL || 'https://vk.com/goodhouse_yar',
   telegramUrl: process.env.NEXT_PUBLIC_TELEGRAM_URL || 'https://t.me/goodhouse',
   bitrix24WebhookUrl: process.env.NEXT_PUBLIC_BITRIX24_WEBHOOK || 'https://YOUR_DOMAIN.bitrix24.ru/rest/1/YOUR_KEY/crm.lead.add.json',
   yandexMetrikaId: process.env.NEXT_PUBLIC_YM_ID || '',
   sourceTag: 'mortgage_calculator_vk',
 }
 
-export interface MortgageProgram {
+export interface MortgageProgram {h
   id: string
   name: string
   rate: number
@@ -47,9 +47,9 @@ export const MORTGAGE_PROGRAMS: MortgageProgram[] = [
   },
   {
     id: 'standard',
-    name: 'Стандартная ипотека',
-    rate: 17.5,
-    minDownPaymentPct: 15,
+        name: 'Рыночная ипотека',
+        rate: 17.4,
+        minDownPaymentPct: 20,
     hint: 'Без ограничений по категориям',
   },
 ]
