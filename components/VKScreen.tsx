@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 
-const VK_CLIENT_ID = '54522161'
+const VK_CLIENT_ID = '54522246'
 const REDIRECT_URI = 'https://gh-ipoteka.vercel.app/api/vk-callback'
 const VK_GROUP_URL = 'https://vk.com/goodhouse_yar'
 
