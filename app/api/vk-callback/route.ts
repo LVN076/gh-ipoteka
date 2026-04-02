@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// VK ID app (id.vk.com) - ipoteka calc
-const VK_CLIENT_ID = '54522161'
-const VK_CLIENT_SECRET = 'vCgZ5Bkp1X9QgexMHjzP'
-const VK_SERVICE_TOKEN = '5cf620c65cf620c65cf620c6765fc9d1f755cf65cf620c63538a87a402808ce9f1f5ca4'
+// VK ID app (id.vk.com) - Калькулятор Ипотеки
+const VK_CLIENT_ID = '54522246'
+const VK_CLIENT_SECRET = 'YZU7RwrciTSdREER2iGg'
+const VK_SERVICE_TOKEN = '70436a4770436a4770436a478f737c9bc17704370436a47198dfa42650974d60bfadcca'
 const VK_GROUP_ID = process.env.VK_GROUP_ID || 'goodhouse_yar'
 const REDIRECT_URI = 'https://gh-ipoteka.vercel.app/api/vk-callback'
 
