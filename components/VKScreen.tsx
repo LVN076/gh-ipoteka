@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 
-const VK_CLIENT_ID = '54518519'
+const VK_CLIENT_ID = '54522161'
 const REDIRECT_URI = 'https://gh-ipoteka.vercel.app/api/vk-callback'
 const VK_GROUP_URL = 'https://vk.com/goodhouse_yar'
 
@@ -42,7 +42,7 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
       client_id: VK_CLIENT_ID,
       redirect_uri: REDIRECT_URI,
       response_type: 'code',
-      scope: 'groups',
+      scope: '',
       state: Math.random().toString(36).substring(2),
     })
     window.location.href = `https://id.vk.com/authorize?${params.toString()}`
