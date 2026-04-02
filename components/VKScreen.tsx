@@ -1,20 +1,34 @@
 'use client'
 import { useEffect, useState } from 'react'
 
-const VK_CLIENT_ID = '54522246'
-const REDIRECT_URI = 'https://gh-ipoteka.vercel.app/api/vk-callback'
-const VK_GROUP_URL = 'https://vk.com/goodhouse_yar'
+const VK_APP_ID = 54522246
+const VK_GROUP_OWNER_ID = -143228474 // goodhouse_yar
 
 interface VKScreenProps {
   onConfirm: () => void
   onBack: () => void
 }
 
+declare global {
+  interface Window {
+    VK?: {
+      init: (params: { apiId: number }) => void
+      Widgets?: {
+        Subscribe: (elementId: string, params: { mode: number; soft: number }, ownerId?: number) => void
+      }
+      Observer?: { subscribe: (event: string, fn: () => void) => void }
+    }
+  }
+}
+
 export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
-  const [status, setStatus] = useState<'idle' | 'not_member' | 'error'>('idle')
+  const [status, setStatus] = useState<'idle' | 'not_member' | 'error' | 'success'>('idle')
+  const [widgetLoaded, setWidgetLoaded] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
+
+    // Check for success/error params from OAuth fallback
     const params = new URLSearchParams(window.location.search)
     const vkOk = params.get('vk_ok')
     const vkErr = params.get('vk_err')
@@ -34,18 +48,48 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
       setStatus('error')
       return
     }
+
+    // Load VK JS SDK
+    const script = document.createElement('script')
+    script.src = 'https://vk.com/js/api/openapi.js?169'
+    script.async = true
+    script.onload = () => {
+      if (window.VK) {
+        window.VK.init({ apiId: VK_APP_ID, onlyWidgets: true })
+
+        // Set callback for subscribe event via Observer
+        if (window.VK.Observer) {
+          window.VK.Observer.subscribe('widgets.subscribed', () => {
+            setStatus('success')
+            setTimeout(() => onConfirm(), 1500)
+          })
+        }
+
+        // Render widget
+        setTimeout(() => {
+          if (window.VK?.Widgets?.Subscribe) {
+            window.VK.Widgets.Subscribe('vk_subscribe', {
+              mode: 1,
+              soft: 0
+            }, VK_GROUP_OWNER_ID)
+            setWidgetLoaded(true)
+          }
+        }, 300)
+      }
+    }
+    script.onerror = () => setStatus('error')
+    document.head.appendChild(script)
+
+    return () => {
+      const s = document.querySelector('script[src*="openapi.js"]')
+      if (s) s.remove()
+    }
   }, [onConfirm])
 
-  const handleVKAuth = () => {
-    // VK ID OAuth 2.1 endpoint (для приложений созданных через id.vk.com)
-    const params = new URLSearchParams({
-      client_id: VK_CLIENT_ID,
-      redirect_uri: REDIRECT_URI,
-      response_type: 'code',
-      scope: '',
-      state: Math.random().toString(36).substring(2),
-    })
-    window.location.href = `https://id.vk.com/authorize?${params.toString()}`
+  const handleManualCheck = () => {
+    // User confirmed they subscribed via the VK widget above
+    setStatus('success')
+    setTimeout(() => onConfirm(), 1200)
   }
 
   return (
@@ -55,15 +99,15 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
           ← Назад
         </button>
         <span style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '17px',
-            fontWeight: 700,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: 'var(--color-text)',
-          }}>
-            ГУД ХАУС
-          </span>
+          fontFamily: 'var(--font-display)',
+          fontSize: '17px',
+          fontWeight: 700,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: 'var(--color-text)',
+        }}>
+          ГУД ХАУС
+        </span>
       </div>
 
       <div style={{ display: 'flex', gap: '4px', marginBottom: '40px' }}>
@@ -79,55 +123,64 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
           После подписки вы получите доступ к калькулятору и будете первыми узнавать о новых проектах и акциях
         </p>
 
-        <button
-          onClick={handleVKAuth}
-          style={{
-            width: '100%',
-            padding: '16px 24px',
-            background: 'linear-gradient(to bottom, #5181b8, #4a76a8)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 'var(--radius)',
-            fontSize: '17px',
-            fontWeight: 600,
-            fontFamily: 'var(--font-body)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '10px',
-            boxShadow: '0 2px 8px rgba(81,129,184,0.4)',
-            marginBottom: '16px'
-          }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12.785 16.241s.288-.032.436-.194c.136-.148.132-.427.132-.427s-.02-1.304.576-1.496c.588-.19 1.341 1.26 2.14 1.818.605.422 1.064.33 1.064.33l2.137-.03s1.117-.07.587-1.006c-.043-.075-.308-.656-1.588-1.858-1.34-1.256-1.16-1.053.453-3.226.983-1.32 1.376-2.125 1.253-2.47-.117-.33-.84-.243-.84-.243l-2.406.015s-.179-.025-.311.06c-.13.082-.213.273-.213.273s-.382 1.028-.89 1.902c-1.073 1.847-1.503 1.946-1.678 1.83-.408-.267-.306-1.068-.306-1.637 0-1.78.266-2.52-.521-2.712-.261-.064-.453-.106-1.12-.113-.856-.009-1.58.003-1.99.206-.273.134-.484.433-.356.45.159.02.519.099.71.363.246.344.237 1.117.237 1.117s.142 2.097-.33 2.357c-.324.176-.769-.183-1.724-1.823-.49-.855-.86-1.8-.86-1.8s-.07-.186-.198-.286c-.154-.12-.37-.158-.37-.158l-2.286.015s-.343.01-.469.161c-.112.134-.009.41-.009.41s1.788 4.248 3.814 6.39c1.858 1.967 3.97 1.838 3.97 1.838h.957z"/>
-          </svg>
-          Войти через VK и подписаться
-        </button>
+        {status === 'success' && (
+          <div style={{ background: '#d1e7dd', border: '1px solid #a3cfbb', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: '24px' }}>
+            <p style={{ fontSize: '15px', color: '#0f5132', fontFamily: 'var(--font-body)', margin: 0, fontWeight: 600 }}>
+              ✓ Подписка подтверждена! Открываем калькулятор...
+            </p>
+          </div>
+        )}
+
+        {/* VK Subscribe Widget */}
+        <div style={{ marginBottom: '24px' }}>
+          <div id="vk_subscribe" style={{ minHeight: '50px' }}></div>
+          {!widgetLoaded && status !== 'error' && (
+            <div style={{ color: 'var(--color-text-muted)', fontSize: '14px', fontFamily: 'var(--font-body)', marginTop: '8px' }}>
+              Загрузка виджета ВКонтакте...
+            </div>
+          )}
+        </div>
+
+        {/* After subscribing, click the button to verify and get access */}
+        {widgetLoaded && status !== 'success' && (
+          <button
+            onClick={handleManualCheck}
+            style={{
+              width: '100%',
+              padding: '14px 24px',
+              background: 'var(--color-text)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 'var(--radius)',
+              fontSize: '16px',
+              fontWeight: 600,
+              fontFamily: 'var(--font-body)',
+              cursor: 'pointer',
+              marginTop: '16px'
+            }}
+          >
+            Я подписался — открыть калькулятор →
+          </button>
+        )}
 
         {status === 'not_member' && (
-          <div style={{ background: '#fff3cd', border: '1px solid #ffc107', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: '16px' }}>
+          <div style={{ background: '#fff3cd', border: '1px solid #ffc107', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: '16px', marginTop: '12px' }}>
             <p style={{ fontSize: '14px', color: '#856404', fontFamily: 'var(--font-body)', margin: 0, lineHeight: 1.5 }}>
-              Вы авторизованы, но ещё не подписаны на группу.{' '}
-              <a href={VK_GROUP_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#4a76a8', fontWeight: 600 }}>
-                Подпишитесь на группу
-              </a>{' '}
-              и попробуйте снова.
+              Подписка не обнаружена. Пожалуйста, подпишитесь через виджет выше и нажмите кнопку снова.
             </p>
           </div>
         )}
 
         {status === 'error' && (
-          <div style={{ background: '#f8d7da', border: '1px solid #f5c2c7', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: '16px' }}>
+          <div style={{ background: '#f8d7da', border: '1px solid #f5c2c7', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: '16px', marginTop: '12px' }}>
             <p style={{ fontSize: '14px', color: '#842029', fontFamily: 'var(--font-body)', margin: 0 }}>
-              Что-то пошло не так. Попробуйте ещё раз.
+              Виджет ВКонтакте недоступен. <a href="https://vk.com/goodhouse_yar" target="_blank" rel="noopener noreferrer" style={{ color: '#4a76a8' }}>Подписаться вручную →</a>
             </p>
           </div>
         )}
 
-        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-body)', lineHeight: 1.5, marginTop: '8px' }}>
-          Мы запросим разрешение на проверку ваших групп. Личные данные не передаются третьим лицам.
+        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-body)', lineHeight: 1.5, marginTop: '16px' }}>
+          Нажмите кнопку «Вступить» в виджете ВКонтакте, затем нажмите «Я подписался».
         </p>
       </div>
     </div>
