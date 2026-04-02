@@ -12,7 +12,7 @@ interface VKScreenProps {
 declare global {
   interface Window {
     VK?: {
-      init: (params: { apiId: number }) => void
+      init: (params: { apiId: number; onlyWidgets?: boolean }) => void
       Widgets?: {
         Subscribe: (elementId: string, params: { mode: number; soft: number }, ownerId?: number) => void
       }
