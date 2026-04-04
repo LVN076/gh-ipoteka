@@ -10,6 +10,7 @@ const VK_GROUP_OWNER_ID = -143228474 // goodhouse_yar
 interface VKScreenProps {
   onConfirm: () => void
   onBack: () => void
+  initialStatus?: 'idle' | 'not_member' | 'error'
 }
 
 declare global {
@@ -45,31 +46,20 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
     .replace(/=/g, '')
 }
 
-export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
-  const [status, setStatus] = useState<'idle' | 'not_member' | 'error' | 'success'>('idle')
+export default function VKScreen({ onConfirm, onBack, initialStatus = 'idle' }: VKScreenProps) {
+  const [status, setStatus] = useState<'idle' | 'not_member' | 'error' | 'success'>(initialStatus)
   const [widgetLoaded, setWidgetLoaded] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const params = new URLSearchParams(window.location.search)
-    const vkOk = params.get('vk_ok')
-    const vkErr = params.get('vk_err')
 
-    if (vkOk === '1') {
-      window.history.replaceState({}, '', '/')
-      onConfirm()
-      return
-    }
-    if (vkErr === 'not_member') {
-      window.history.replaceState({}, '', '/')
-      setStatus('not_member')
-      return
-    }
-    if (vkErr) {
-      window.history.replaceState({}, '', '/')
-      setStatus('error')
-      return
-    }
+    // Load VK widget script (always, regardless of initialStatus)
+    // Remove any previously loaded script first
+    const existing = document.querySelector('script[src*="openapi.js"]')
+    if (existing) existing.remove()
+    // Reset widget container
+    const widgetEl = document.getElementById('vk_subscribe')
+    if (widgetEl) widgetEl.innerHTML = ''
 
     const script = document.createElement('script')
     script.src = 'https://vk.com/js/api/openapi.js?169'
@@ -85,13 +75,17 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
         }, 300)
       }
     }
-    script.onerror = () => setStatus('error')
+    script.onerror = () => {
+      // Widget failed but we still show the confirm button
+      setWidgetLoaded(true)
+    }
     document.head.appendChild(script)
+
     return () => {
       const s = document.querySelector('script[src*="openapi.js"]')
       if (s) s.remove()
     }
-  }, [onConfirm])
+  }, [])
 
   const handleVKLogin = async () => {
     try {
@@ -126,10 +120,12 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
           ГУД ХАУС
         </span>
       </div>
+
       <div style={{ display: 'flex', gap: '4px', marginBottom: '40px' }}>
         <div style={{ height: '2px', flex: 1, background: 'var(--color-text)' }}></div>
         <div style={{ height: '2px', flex: 1, background: 'var(--color-border)' }}></div>
       </div>
+
       <div style={{ flex: 1 }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '32px', fontWeight: 400, lineHeight: 1.2, marginBottom: '16px', color: 'var(--color-text)' }}>
           Подпишитесь на нашу группу
@@ -137,6 +133,7 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
         <p style={{ color: 'var(--color-text-muted)', fontSize: '15px', lineHeight: 1.6, marginBottom: '32px', fontFamily: 'var(--font-body)' }}>
           После подписки вы получите доступ к калькулятору и будете первыми узнавать о новых проектах и акциях
         </p>
+
         {status === 'success' && (
           <div style={{ background: '#d1e7dd', border: '1px solid #a3cfbb', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: '24px' }}>
             <p style={{ fontSize: '15px', color: '#0f5132', fontFamily: 'var(--font-body)', margin: 0, fontWeight: 600 }}>
@@ -144,14 +141,16 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
             </p>
           </div>
         )}
+
         <div style={{ marginBottom: '24px' }}>
           <div id="vk_subscribe" style={{ minHeight: '50px' }}></div>
-          {!widgetLoaded && status !== 'error' && (
+          {!widgetLoaded && (
             <div style={{ color: 'var(--color-text-muted)', fontSize: '14px', fontFamily: 'var(--font-body)', marginTop: '8px' }}>
               Загрузка виджета ВКонтакте...
             </div>
           )}
         </div>
+
         {widgetLoaded && status !== 'success' && (
           <button
             onClick={handleVKLogin}
@@ -160,6 +159,7 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
             Я подписался — подтвердить через ВКонтакте →
           </button>
         )}
+
         {status === 'not_member' && (
           <div style={{ background: '#fff3cd', border: '1px solid #ffc107', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: '16px', marginTop: '12px' }}>
             <p style={{ fontSize: '14px', color: '#856404', fontFamily: 'var(--font-body)', margin: 0, lineHeight: 1.5 }}>
@@ -167,6 +167,7 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
             </p>
           </div>
         )}
+
         {status === 'error' && (
           <div style={{ background: '#f8d7da', border: '1px solid #f5c2c7', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: '16px', marginTop: '12px' }}>
             <p style={{ fontSize: '14px', color: '#842029', fontFamily: 'var(--font-body)', margin: 0 }}>
@@ -175,6 +176,7 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
             </p>
           </div>
         )}
+
         <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-body)', lineHeight: 1.5, marginTop: '16px' }}>
           Нажмите «Вступить» в виджете, затем нажмите кнопку подтверждения.
         </p>
