@@ -1,11 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
 
-/**
- * VK App ID и числовой ID группы (без минуса).
- * VK_APP_ID нужен для OAuth-авторизации (Authorization Code Flow через id.vk.com).
- * VK_GROUP_OWNER_ID используется только для виджета подписки.
- */
 const VK_APP_ID = 54522246
 const VK_GROUP_OWNER_ID = -143228474 // goodhouse_yar
 
@@ -81,20 +76,21 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
   }, [onConfirm])
 
   /**
-   * Запустить Authorization Code Flow через VK ID.
-   * Сервер /api/vk-callback получит code, обменяет на токен,
+   * Запустить Authorization Code Flow через oauth.vk.com (старый, надёжный).
+   * Сервер /api/vk-callback обменяет code на токен,
    * получит user_id и вызовет groups.isMember.
-   * Только при isMember === 1 — редирект на /?vk_ok=1.
+   * При isMember === 1 — редирект на /?vk_ok=1.
    */
   const handleVKLogin = () => {
     const redirectUri = encodeURIComponent(`${window.location.origin}/api/vk-callback`)
-    // VK ID OAuth 2.0 — Authorization Code Flow (серверная проверка)
+    // oauth.vk.com — стандартный OAuth 2.0 VK
     window.location.href =
-      `https://id.vk.com/authorize?response_type=code` +
-      `&client_id=${VK_APP_ID}` +
+      `https://oauth.vk.com/authorize` +
+      `?client_id=${VK_APP_ID}` +
       `&redirect_uri=${redirectUri}` +
       `&scope=groups` +
-      `&state=vk_sub_check`
+      `&response_type=code` +
+      `&v=5.131`
   }
 
   return (
@@ -124,7 +120,6 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
           После подписки вы получите доступ к калькулятору и будете первыми узнавать о новых проектах и акциях
         </p>
 
-        {/* Успех */}
         {status === 'success' && (
           <div style={{ background: '#d1e7dd', border: '1px solid #a3cfbb', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: '24px' }}>
             <p style={{ fontSize: '15px', color: '#0f5132', fontFamily: 'var(--font-body)', margin: 0, fontWeight: 600 }}>
@@ -143,7 +138,6 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
           )}
         </div>
 
-        {/* Кнопка "Я подписался" — видна когда виджет загружен и нет успеха */}
         {widgetLoaded && status !== 'success' && (
           <button
             onClick={handleVKLogin}
@@ -165,29 +159,27 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
           </button>
         )}
 
-        {/* Не подписан */}
         {status === 'not_member' && (
           <div style={{ background: '#fff3cd', border: '1px solid #ffc107', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: '16px', marginTop: '12px' }}>
             <p style={{ fontSize: '14px', color: '#856404', fontFamily: 'var(--font-body)', margin: 0, lineHeight: 1.5 }}>
-              ❌ Подписка не обнаружена. Пожалуйста, нажмите «Вступить» в виджете выше, затем нажмите кнопку снова.
+              ❌ Подписка не обнаружена. Нажмите «Вступить» в виджете выше и попробуйте снова.
             </p>
           </div>
         )}
 
-        {/* Ошибка */}
         {status === 'error' && (
           <div style={{ background: '#f8d7da', border: '1px solid #f5c2c7', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: '16px', marginTop: '12px' }}>
             <p style={{ fontSize: '14px', color: '#842029', fontFamily: 'var(--font-body)', margin: 0 }}>
               Не удалось проверить подписку.{' '}
               <a href="https://vk.com/goodhouse_yar" target="_blank" rel="noopener noreferrer" style={{ color: '#4a76a8' }}>
-                Открыть группу ВКонтакте →
+                Открыть группу →
               </a>
             </p>
           </div>
         )}
 
         <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontFamily: 'var(--font-body)', lineHeight: 1.5, marginTop: '16px' }}>
-          Нажмите «Вступить» в виджете ВКонтакте, затем нажмите кнопку подтверждения.
+          Нажмите «Вступить» в виджете, затем нажмите кнопку подтверждения.
         </p>
       </div>
     </div>
