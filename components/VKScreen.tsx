@@ -103,8 +103,13 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
     const codeVerifier = generateCodeVerifier()
     const codeChallenge = await generateCodeChallenge(codeVerifier)
 
-    const redirectUri = encodeURIComponent(`${window.location.origin}/api/vk-callback`)
-    const state = encodeURIComponent('vk_sub_check|' + codeVerifier)
+    // Store code_verifier in a session storage key for the server to retrieve
+    // We also set it as a SameSite=Lax; Path=/ cookie so server can read it
+    const origin = window.location.origin
+    document.cookie = 'pkce_verifier=' + encodeURIComponent(codeVerifier) + '; path=/; samesite=lax; max-age=300'
+    sessionStorage.setItem('pkce_verifier', codeVerifier)
+
+    const redirectUri = encodeURIComponent(origin + '/api/vk-callback')
 
     window.location.href =
       'https://id.vk.com/authorize' +
@@ -113,7 +118,7 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
       '&redirect_uri=' + redirectUri +
       '&code_challenge=' + codeChallenge +
       '&code_challenge_method=S256' +
-      '&state=' + state
+      '&state=vk_sub_check'
   }
 
   return (
