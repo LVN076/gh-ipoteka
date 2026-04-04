@@ -38,12 +38,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/?vk_err=no_code', request.url))
   }
 
-  // Извлекаем code_verifier из state: формат "vk_sub_check|<verifier>"
-  const parts = stateRaw.split('|')
-  const codeVerifier = parts.length >= 2 ? parts.slice(1).join('|') : null
+  // Читаем code_verifier из cookie (установлен клиентом перед редиректом)
+  const cookieHeader = request.headers.get('cookie') || ''
+  const pkceMatch = cookieHeader.match(/pkce_verifier=([^;\s]+)/)
+  const codeVerifier = pkceMatch ? decodeURIComponent(pkceMatch[1]) : null
+
+  console.log('[vk-callback] cookie header length:', cookieHeader.length, 'verifier found:', !!codeVerifier)
 
   if (!codeVerifier) {
-    console.error('[vk-callback] No code_verifier in state:', stateRaw)
+    console.error('[vk-callback] No pkce_verifier cookie. Cookies:', cookieHeader.slice(0, 200))
     return NextResponse.redirect(new URL('/?vk_err=no_verifier', request.url))
   }
 
