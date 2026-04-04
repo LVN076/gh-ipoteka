@@ -13,25 +13,25 @@ export async function sendLeadToTelegram(data: LeadData): Promise<void> {
   const source = data.source === 'vk_subscribe_flow' ? '🔵 ВКонтакте' : '📱 Телефон'
 
   const lines: string[] = [
-    '🔔 *Новая заявка с калькулятора*',
+    '🔔 <b>Новая заявка с калькулятора</b>',
     '',
-    `👤 *Имя:* ${escmd(data.name)}`,
-    `📞 *Телефон:* ${escmd(data.phone)}`,
-    `📌 *Источник:* ${source}`,
+    `👤 <b>Имя:</b> ${esc(data.name)}`,
+    `📞 <b>Телефон:</b> ${esc(data.phone)}`,
+    `📌 <b>Источник:</b> ${source}`,
   ]
 
-  if (data.programName)    lines.push(`🏠 *Программа:* ${escmd(data.programName)}`)
-  if (data.propertyPrice)  lines.push(`💰 *Стоимость:* ${escmd(data.propertyPrice.toLocaleString('ru-RU'))} руб\.`)
-  if (data.downPayment)    lines.push(`💳 *Взнос:* ${escmd(data.downPayment.toLocaleString('ru-RU'))} руб\.`)
-  if (data.termYears)      lines.push(`📅 *Срок:* ${escmd(String(data.termYears))} лет`)
-  if (data.monthlyPayment) lines.push(`💵 *Платёж/мес:* ${escmd(data.monthlyPayment.toLocaleString('ru-RU'))} руб\.`)
+  if (data.programName)    lines.push(`🏠 <b>Программа:</b> ${esc(data.programName)}`)
+  if (data.propertyPrice)  lines.push(`💰 <b>Стоимость:</b> ${esc(data.propertyPrice.toLocaleString('ru-RU'))} руб.`)
+  if (data.downPayment)    lines.push(`💳 <b>Взнос:</b> ${esc(data.downPayment.toLocaleString('ru-RU'))} руб.`)
+  if (data.termYears)      lines.push(`📅 <b>Срок:</b> ${esc(String(data.termYears))} лет`)
+  if (data.monthlyPayment) lines.push(`💵 <b>Платёж/мес:</b> ${esc(data.monthlyPayment.toLocaleString('ru-RU'))} руб.`)
 
   if (data.utm_source || data.utm_medium || data.utm_campaign) {
     lines.push('')
-    lines.push('📊 *UTM:*')
-    if (data.utm_source)   lines.push(`  source: ${escmd(data.utm_source)}`)
-    if (data.utm_medium)   lines.push(`  medium: ${escmd(data.utm_medium)}`)
-    if (data.utm_campaign) lines.push(`  campaign: ${escmd(data.utm_campaign)}`)
+    lines.push('📊 <b>UTM:</b>')
+    if (data.utm_source)   lines.push(`  source: ${esc(data.utm_source)}`)
+    if (data.utm_medium)   lines.push(`  medium: ${esc(data.utm_medium)}`)
+    if (data.utm_campaign) lines.push(`  campaign: ${esc(data.utm_campaign)}`)
   }
 
   const text = lines.join('\n')
@@ -40,7 +40,7 @@ export async function sendLeadToTelegram(data: LeadData): Promise<void> {
   const body: Record<string, unknown> = {
     chat_id: CHAT_ID,
     text,
-    parse_mode: 'MarkdownV2',
+    parse_mode: 'HTML',
   }
   if (THREAD_ID) body.message_thread_id = Number(THREAD_ID)
 
@@ -52,7 +52,7 @@ export async function sendLeadToTelegram(data: LeadData): Promise<void> {
     })
     const json = await res.json()
     if (!json.ok) {
-      console.error('[Telegram] sendMessage error:', json)
+      console.error('[Telegram] sendMessage error:', JSON.stringify(json))
     } else {
       console.log('[Telegram] лид отправлен, message_id:', json.result?.message_id)
     }
@@ -61,7 +61,10 @@ export async function sendLeadToTelegram(data: LeadData): Promise<void> {
   }
 }
 
-// Экранирование спецсимволов MarkdownV2
-function escmd(str: string): string {
-  return str.replace(/[_*[]()~`>#+=|{}.!\\-]/g, '\\$&')
+// Экранирование HTML-спецсимволов
+function esc(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
 }
