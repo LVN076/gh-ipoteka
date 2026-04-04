@@ -30,7 +30,6 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    // Обработать редирект после OAuth — сервер уже проверил подписку
     const params = new URLSearchParams(window.location.search)
     const vkOk  = params.get('vk_ok')
     const vkErr = params.get('vk_err')
@@ -51,7 +50,6 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
       return
     }
 
-    // Загрузить VK JS SDK для виджета подписки
     const script = document.createElement('script')
     script.src = 'https://vk.com/js/api/openapi.js?169'
     script.async = true
@@ -76,30 +74,25 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
   }, [onConfirm])
 
   /**
-   * Запустить Authorization Code Flow через oauth.vk.com (старый, надёжный).
-   * Сервер /api/vk-callback обменяет code на токен,
-   * получит user_id и вызовет groups.isMember.
-   * При isMember === 1 — редирект на /?vk_ok=1.
+   * VK ID OAuth 2.0 (id.vk.com) — приложение зарегистрировано именно там.
+   * scope НЕ запрашиваем — нам нужен только user_id.
+   * Проверку членства делаем на сервере через сервисный токен.
    */
   const handleVKLogin = () => {
     const redirectUri = encodeURIComponent(`${window.location.origin}/api/vk-callback`)
-    // oauth.vk.com — стандартный OAuth 2.0 VK
     window.location.href =
-      `https://oauth.vk.com/authorize` +
-      `?client_id=${VK_APP_ID}` +
+      `https://id.vk.com/authorize` +
+      `?response_type=code` +
+      `&client_id=${VK_APP_ID}` +
       `&redirect_uri=${redirectUri}` +
-      `&scope=groups` +
-      `&response_type=code` +
-      `&v=5.131`
+      `&state=vk_sub_check`
+    // scope намеренно не передаём — VK ID выдаёт user_id без лишних прав
   }
 
   return (
     <div className="screen-enter" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', padding: '20px 24px 32px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
-        <button
-          onClick={onBack}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-body)' }}
-        >
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-body)' }}>
           ← Назад
         </button>
         <span style={{ fontFamily: 'var(--font-display)', fontSize: '17px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-text)' }}>
@@ -128,7 +121,6 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
           </div>
         )}
 
-        {/* VK Subscribe Widget */}
         <div style={{ marginBottom: '24px' }}>
           <div id="vk_subscribe" style={{ minHeight: '50px' }}></div>
           {!widgetLoaded && status !== 'error' && (
@@ -139,22 +131,7 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
         </div>
 
         {widgetLoaded && status !== 'success' && (
-          <button
-            onClick={handleVKLogin}
-            style={{
-              width: '100%',
-              padding: '14px 24px',
-              background: 'var(--color-text)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 'var(--radius)',
-              fontSize: '16px',
-              fontWeight: 600,
-              fontFamily: 'var(--font-body)',
-              cursor: 'pointer',
-              marginTop: '16px',
-            }}
-          >
+          <button onClick={handleVKLogin} style={{ width: '100%', padding: '14px 24px', background: 'var(--color-text)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', fontSize: '16px', fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer', marginTop: '16px' }}>
             Я подписался — подтвердить через ВКонтакте →
           </button>
         )}
@@ -171,9 +148,7 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
           <div style={{ background: '#f8d7da', border: '1px solid #f5c2c7', borderRadius: 'var(--radius)', padding: '14px 16px', marginBottom: '16px', marginTop: '12px' }}>
             <p style={{ fontSize: '14px', color: '#842029', fontFamily: 'var(--font-body)', margin: 0 }}>
               Не удалось проверить подписку.{' '}
-              <a href="https://vk.com/goodhouse_yar" target="_blank" rel="noopener noreferrer" style={{ color: '#4a76a8' }}>
-                Открыть группу →
-              </a>
+              <a href="https://vk.com/goodhouse_yar" target="_blank" rel="noopener noreferrer" style={{ color: '#4a76a8' }}>Открыть группу →</a>
             </p>
           </div>
         )}
