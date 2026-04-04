@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendLeadToBitrix24, LeadData } from '@/lib/bitrix24'
+import { sendLeadToTelegram } from '@/lib/telegram'
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,14 +8,26 @@ export async function POST(request: NextRequest) {
     const leadData: LeadData = body
 
     if (!leadData.name || !leadData.phone) {
-      return NextResponse.json({ success: false, error: 'Имя и телефон обязательны' }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: 'Имя и телефон обязательны' },
+        { status: 400 }
+      )
     }
 
-    const result = await sendLeadToBitrix24(leadData)
+    // Отправляем в Битрикс24 и Telegram параллельно
+    const [bitrixResult] = await Promise.allSettled([
+      sendLeadToBitrix24(leadData),
+      sendLeadToTelegram(leadData),
+    ])
 
-    return NextResponse.json(result)
+    const bitrix = bitrixResult.status === 'fulfilled' ? bitrixResult.value : { success: false }
+
+    return NextResponse.json(bitrix)
   } catch (error) {
     console.error('[API/lead]', error)
-    return NextResponse.json({ success: false, error: 'Внутренняя ошибка сервера' }, { status: 500 })
+    return NextResponse.json(
+      { success: false, error: 'Внутренняя ошибка сервера' },
+      { status: 500 }
+    )
   }
 }
