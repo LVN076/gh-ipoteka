@@ -23,6 +23,27 @@ declare global {
   }
 }
 
+/** Generate a cryptographically random string for PKCE */
+function generateCodeVerifier(): string {
+  const array = new Uint8Array(32)
+  crypto.getRandomValues(array)
+  return btoa(String.fromCharCode(...array))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '')
+}
+
+/** SHA-256 hash -> base64url for PKCE code_challenge */
+async function generateCodeChallenge(verifier: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(verifier)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '')
+}
+
 export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
   const [status, setStatus] = useState<'idle' | 'not_member' | 'error' | 'success'>('idle')
   const [widgetLoaded, setWidgetLoaded] = useState(false)
@@ -31,7 +52,7 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
     if (typeof window === 'undefined') return
 
     const params = new URLSearchParams(window.location.search)
-    const vkOk  = params.get('vk_ok')
+    const vkOk = params.get('vk_ok')
     const vkErr = params.get('vk_err')
 
     if (vkOk === '1') {
@@ -74,25 +95,34 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
   }, [onConfirm])
 
   /**
-   * VK ID OAuth 2.0 (id.vk.com) — приложение зарегистрировано именно там.
-   * scope НЕ запрашиваем — нам нужен только user_id.
-   * Проверку членства делаем на сервере через сервисный токен.
+   * VK ID OAuth 2.0 с PKCE (RFC 7636).
+   * VK ID (id.vk.com) требует PKCE — без него выдаёт "Ошибку загрузки".
+   * code_verifier передаём в state, чтобы сервер мог его использовать при обмене code.
    */
-  const handleVKLogin = () => {
+  const handleVKLogin = async () => {
+    const codeVerifier = generateCodeVerifier()
+    const codeChallenge = await generateCodeChallenge(codeVerifier)
+
     const redirectUri = encodeURIComponent(`${window.location.origin}/api/vk-callback`)
+    const state = encodeURIComponent('vk_sub_check|' + codeVerifier)
+
     window.location.href =
-      `https://id.vk.com/authorize` +
-      `?response_type=code` +
-      `&client_id=${VK_APP_ID}` +
-      `&redirect_uri=${redirectUri}` +
-      `&state=vk_sub_check`
-    // scope намеренно не передаём — VK ID выдаёт user_id без лишних прав
+      'https://id.vk.com/authorize' +
+      '?response_type=code' +
+      '&client_id=' + VK_APP_ID +
+      '&redirect_uri=' + redirectUri +
+      '&code_challenge=' + codeChallenge +
+      '&code_challenge_method=S256' +
+      '&state=' + state
   }
 
   return (
     <div className="screen-enter" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', padding: '20px 24px 32px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-body)' }}>
+        <button
+          onClick={onBack}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'var(--font-body)' }}
+        >
           ← Назад
         </button>
         <span style={{ fontFamily: 'var(--font-display)', fontSize: '17px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--color-text)' }}>
@@ -131,7 +161,10 @@ export default function VKScreen({ onConfirm, onBack }: VKScreenProps) {
         </div>
 
         {widgetLoaded && status !== 'success' && (
-          <button onClick={handleVKLogin} style={{ width: '100%', padding: '14px 24px', background: 'var(--color-text)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', fontSize: '16px', fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer', marginTop: '16px' }}>
+          <button
+            onClick={handleVKLogin}
+            style={{ width: '100%', padding: '14px 24px', background: 'var(--color-text)', color: '#fff', border: 'none', borderRadius: 'var(--radius)', fontSize: '16px', fontWeight: 600, fontFamily: 'var(--font-body)', cursor: 'pointer', marginTop: '16px' }}
+          >
             Я подписался — подтвердить через ВКонтакте →
           </button>
         )}
