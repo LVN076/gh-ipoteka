@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import HeroScreen from '../components/HeroScreen'
 import AccessScreen from '../components/AccessScreen'
@@ -11,6 +10,7 @@ import { CalculatorResult } from '../lib/mortgage'
 import { SITE_CONFIG } from '../lib/config'
 
 type Screen = 'hero' | 'access' | 'vk' | 'lead' | 'calculator' | 'result'
+type VKInitialStatus = 'idle' | 'not_member' | 'error'
 
 interface CalcInput {
   programName: string
@@ -26,11 +26,33 @@ export default function HomeApp() {
   const [userName, setUserName] = useState('')
   const [calcResult, setCalcResult] = useState<CalculatorResult | null>(null)
   const [calcInput, setCalcInput] = useState<CalcInput | null>(null)
+  const [vkInitialStatus, setVkInitialStatus] = useState<VKInitialStatus>('idle')
 
   useEffect(() => {
     setMounted(true)
-    if (typeof window !== 'undefined' && (window as any).ym) {
-      ;(window as any).ym(SITE_CONFIG.yandexMetrikaId, 'hit', window.location.pathname)
+    if (typeof window !== 'undefined') {
+      if ((window as any).ym) {
+        ;(window as any).ym(SITE_CONFIG.yandexMetrikaId, 'hit', window.location.pathname)
+      }
+      // Handle VK callback redirect params
+      const params = new URLSearchParams(window.location.search)
+      const vkOk = params.get('vk_ok')
+      const vkErr = params.get('vk_err')
+      if (vkOk === '1') {
+        // Clean URL and go directly to calculator
+        window.history.replaceState({}, '', '/')
+        setScreen('calculator')
+      } else if (vkErr === 'not_member') {
+        // Clean URL and return to VK screen showing error
+        window.history.replaceState({}, '', '/')
+        setVkInitialStatus('not_member')
+        setScreen('vk')
+      } else if (vkErr) {
+        // Other errors - return to VK screen showing generic error
+        window.history.replaceState({}, '', '/')
+        setVkInitialStatus('error')
+        setScreen('vk')
+      }
     }
   }, [])
 
@@ -38,20 +60,20 @@ export default function HomeApp() {
 
   const handleStart = () => setScreen('access')
   const handleVKConfirm = () => setScreen('calculator')
-  const handleVK = () => setScreen('vk')
+  const handleVK = () => {
+    setVkInitialStatus('idle')
+    setScreen('vk')
+  }
   const handlePhone = () => setScreen('lead')
-
   const handleLeadSuccess = (name: string) => {
     setUserName(name)
     setScreen('calculator')
   }
-
   const handleResult = (result: CalculatorResult, input: CalcInput) => {
     setCalcResult(result)
     setCalcInput(input)
     setScreen('result')
   }
-
   const handleRecalculate = () => setScreen('calculator')
 
   return (
@@ -69,19 +91,14 @@ export default function HomeApp() {
           <VKScreen
             onConfirm={handleVKConfirm}
             onBack={() => setScreen('access')}
+            initialStatus={vkInitialStatus}
           />
         )}
         {screen === 'lead' && (
-          <LeadFormScreen
-            onSuccess={handleLeadSuccess}
-            onBack={() => setScreen('access')}
-          />
+          <LeadFormScreen onSuccess={handleLeadSuccess} onBack={() => setScreen('access')} />
         )}
         {screen === 'calculator' && (
-          <CalculatorScreen
-            userName={userName}
-            onResult={handleResult}
-          />
+          <CalculatorScreen userName={userName} onResult={handleResult} />
         )}
         {screen === 'result' && calcResult && calcInput && (
           <ResultScreen
